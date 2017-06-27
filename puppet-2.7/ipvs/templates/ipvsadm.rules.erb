@@ -1,0 +1,7 @@
+-A -<%=@protocol%> <%=@bind_addr%>:<%=@bind_port%> -s <%=@scheduling_method%>
+<% @real_servers.each do |server| -%>
+<% if server != "" -%>
+-a -<%=@protocol%> <%=@bind_addr%>:<%=@bind_port%> -r <%=server%>:<%=@bind_port%> -<%=@forwarding_method%>
+<% end -%>
+<% end -%>
+

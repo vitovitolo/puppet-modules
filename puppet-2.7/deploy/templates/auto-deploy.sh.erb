@@ -1,0 +1,35 @@
+#!/bin/bash
+# auto-deploy artifacts script: iterate into versions directory and deploy it using rsyncd
+
+VERSIONS_PATH="/etc/company/artifacts/versions"
+VERSIONS_TMP_FILE="/tmp/auto-deploy"
+RSYNC_USER="<%=@rsyncd_auth_user%>"
+RSYNC_SECRET_FILE="<%=@rsyncd_secrets_file_path%>"
+RSYNC_PASSWD_FILE="/tmp/rsync_tmp_pw"
+
+#Create rsync passwd temp file
+if [ -f ${RSYNC_SECRET_FILE} ]; then
+	echo `cat ${RSYNC_SECRET_FILE} | awk -F':' '{print $2}' ` > ${RSYNC_PASSWD_FILE}
+	chmod 750 ${RSYNC_PASSWD_FILE}
+else
+	echo "Error: Rsync secret file does not exists: ${RSYNC_SECRET_FILE}"
+	exit -1
+fi
+
+#Download versions url from all artifacts
+if [ -d ${VERSIONS_PATH} ]; then
+	for i in `ls ${VERSIONS_PATH}`; do
+		rm ${VERSIONS_TMP_FILE}* 2> /dev/null
+		#Download versions url file
+		wget --quiet `cat ${VERSIONS_PATH}/$i ` -O ${VERSIONS_TMP_FILE}_${i}
+	done
+else
+	echo "Error: Versions path does not exists: ${VERSIONS_PATH}"
+	exit -1
+fi
+#Rsync to localhost versionis files (deploy)
+rsync --password-file="${RSYNC_PASSWD_FILE}" -a ${VERSIONS_TMP_FILE}* rsync://${RSYNC_USER}@localhost:873/deploy/
+
+#Delete tmp files
+rm ${VERSIONS_TMP_FILE}*
+rm ${RSYNC_PASSWD_FILE}

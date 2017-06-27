@@ -1,0 +1,24 @@
+minSessionTimeout=10000
+maxSessionTimeout=40000
+tickTime=2000
+dataDir=/var/lib/zookeeper/
+clientPort=2181
+initLimit=5
+syncLimit=2
+maxClientCnxns=0
+
+snapCount = <%=@snapCount%>
+
+autopurge.snapRetainCount = <%=@autopurge_snapRetainCount%>
+autopurge.purgeInterval = <%=@autopurge_purgeInterval%>
+
+<%
+server_number=1	
+@server_list.each do |servername| -%>
+server.<%=server_number%>=<%=servername%>:2888:3888
+<%
+	server_number=server_number+1
+end -%>
+<% if @preAllocSize %>
+preAllocSize=<%=@preAllocSize%>
+<%end %>

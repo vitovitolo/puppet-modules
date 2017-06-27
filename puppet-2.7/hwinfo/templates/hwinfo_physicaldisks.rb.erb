@@ -1,0 +1,20 @@
+Facter.add(:hwinfo_physicaldisks_string) do
+	setcode do
+		if not File.exist? "/var/run/hwinfo_physicaldisks"
+			swap_disk= Facter::Util::Resolution.exec("cat /proc/swaps | sed 1d | awk '{print $1}' | xargs basename 2> /dev/null")
+			disks_array = Facter::Util::Resolution.exec("cat /proc/diskstats  | awk '{print $3}' | grep -v '^loop' | grep -v '^fd' | grep -v '^sr' | grep -v '^dm' | grep -Ev '^sd[a-z][0-9]+'").to_s.split( /\r?\n/ )
+			if swap_disk != ""
+				disks_array.delete(swap_disk.to_s)
+			end
+			File.open("/var/run/hwinfo_physicaldisks", "w") do |f|     
+				disks_array.each_with_index do |disk,i|
+					f.write(disk)   
+		     			if i < (disks_array.size - 1) 
+						f.write(',')   
+					end
+				end
+			end
+		end
+		Facter::Util::Resolution.exec("cat /var/run/hwinfo_physicaldisks").to_s
+	end
+end

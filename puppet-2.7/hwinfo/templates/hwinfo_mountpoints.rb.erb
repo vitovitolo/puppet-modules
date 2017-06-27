@@ -1,0 +1,17 @@
+Facter.add(:hwinfo_mountpoints_string) do
+	setcode do
+		if not File.exist? "/var/run/hwinfo_mountpoints"
+			mounts_array = Facter::Util::Resolution.exec("cat /proc/mounts | grep -v '\ /\ ' | grep -v boot |grep -E 'xfs|ext2|ext3|ext4' | awk '{print $2}' | tr '/' '_'  ").to_s.split( /\r?\n/ )
+			mounts_array.insert(0,'root')
+			File.open("/var/run/hwinfo_mountpoints", "w") do |f|     
+				mounts_array.each_with_index do |mount,i|
+					f.write(mount)   
+		     			if i < (mounts_array.size - 1) 
+						f.write(',')   
+					end
+				end
+			end
+		end
+		Facter::Util::Resolution.exec("cat /var/run/hwinfo_mountpoints").to_s
+	end
+end

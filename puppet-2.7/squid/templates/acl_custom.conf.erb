@@ -1,0 +1,10 @@
+<% @acl_src.each do |src| -%>
+acl <%=@acl_name%>_src src <%=src%>
+<% end -%>
+<% if @acl_regexfile -%>
+acl <%=@acl_name%>_regex url_regex "/etc/squid/regex.d/<%=@acl_regexfile%>"
+<% elsif @acl_urlregex -%>
+acl <%=@acl_name%>_regex url_regex <%=@acl_urlregex%>
+<% end -%>
+http_access allow <%=@acl_name%>_src
+http_access allow <%=@acl_name%>_regex

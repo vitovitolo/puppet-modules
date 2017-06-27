@@ -1,0 +1,16 @@
+Facter.add(:hwinfo_networkifaces_string) do
+	setcode do
+		if not File.exist? "/var/run/hwinfo_networkifaces"
+			net_ifaces_array = Facter::Util::Resolution.exec("cat /proc/net/dev | sed 1,2d | awk '{print $1}' | tr -d ':' | grep -v '^vif' | grep -v '^lo' | grep -v '^veth' | grep -v '^dummy'").split( /\r?\n/ )
+			File.open("/var/run/hwinfo_networkifaces", "w") do |f|     
+				net_ifaces_array.each_with_index do |iface,i|
+					f.write(iface)   
+		     			if i < (net_ifaces_array.size - 1) 
+						f.write(',')   
+					end
+				end
+			end
+		end
+		Facter::Util::Resolution.exec("cat /var/run/hwinfo_networkifaces").to_s
+	end
+end

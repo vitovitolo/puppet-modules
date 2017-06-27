@@ -1,0 +1,22 @@
+#!/bin/bash
+#
+# zookeeper
+#
+### BEGIN INIT INFO
+# Provides: zookeeper
+# Required-Start: $network $local_fs
+# Required-Stop: $network $local_fs
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: start and stop zookeeper daemon
+# Description: Zookeeper is a key:value database
+### END INIT INFO
+
+export JAVA_HOME=/usr/lib/jvm/default-java
+export ZOOBINDIR=/opt/zookeeper/bin
+
+cd /var/log/zookeeper
+$ZOOBINDIR/zkServer.sh $*
+cd - &> /dev/null
+
+

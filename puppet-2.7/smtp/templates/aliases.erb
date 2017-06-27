@@ -1,0 +1,4 @@
+postmaster: root
+<% @rejected_recipients.each do |recipient| -%>
+<%=recipient%> REJECT
+<% end -%>

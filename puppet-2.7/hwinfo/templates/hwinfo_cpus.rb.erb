@@ -1,0 +1,16 @@
+Facter.add(:hwinfo_cpus_string) do
+	setcode do
+		if not File.exist? "/var/run/hwinfo_cpus"
+			cpu_number = Facter::Util::Resolution.exec("cat /proc/cpuinfo | grep processor  | wc -l")
+			cpus_array=[]
+			File.open("/var/run/hwinfo_cpus", "w") do |f|     
+				for i in (0..cpu_number.to_i-1)
+					cpus_array << "cpu"+i.to_s
+					f.write('cpu'+i.to_s)   
+					f.write(',')   
+				end
+			end
+		end
+		Facter::Util::Resolution.exec("cat /var/run/hwinfo_cpus").to_s
+	end
+end

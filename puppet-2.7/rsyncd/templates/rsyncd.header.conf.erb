@@ -1,0 +1,14 @@
+# GLOBAL OPTIONS
+log file = /var/log/rsyncd.log
+syslog facility=daemon
+
+# for pid file, do not use /var/run/rsync.pid if
+# you are going to run rsync out of the init.d script.
+# The init.d script does its own pid file handling,
+# so omit the "pid file" line completely in that case.
+# pid file=/var/run/rsyncd.pid
+
+lock file = /var/run/rsync.lock
+
+port = <%=@port%>
+use chroot = <%=@chroot%>

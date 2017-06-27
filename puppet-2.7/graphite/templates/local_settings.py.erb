@@ -1,0 +1,37 @@
+SECRET_KEY = '41778093331572316735'
+ALLOWED_HOSTS = [ '*' ]
+TIME_ZONE = 'Europe/Madrid'
+LOG_RENDERING_PERFORMANCE = True
+LOG_CACHE_PERFORMANCE = True
+LOG_METRIC_ACCESS = True
+DEBUG = True
+#MEMCACHE_HOSTS = ['10.10.10.10:11211', '10.10.10.11:11211', '10.10.10.12:11211']
+#DEFAULT_CACHE_DURATION = 60 # Cache images and data for 1 minute
+GRAPHITE_ROOT = '/usr/share/graphite-web'
+CONF_DIR = '/etc/graphite'
+STORAGE_DIR = '/var/lib/graphite/whisper'
+CONTENT_DIR = '/usr/share/graphite-web/static'
+#DASHBOARD_CONF = '/opt/graphite/conf/dashboard.conf'
+#GRAPHTEMPLATES_CONF = '/opt/graphite/conf/graphTemplates.conf'
+WHISPER_DIR = '/var/lib/graphite/whisper'
+RRD_DIR = '/var/lib/graphite/storage/rrd'
+DATA_DIRS = [WHISPER_DIR, RRD_DIR]
+LOG_DIR = '/var/log/graphite'
+INDEX_FILE = '/var/lib/graphite/search_index'  # Search index file
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.example.com'
+EMAIL_PORT = 25
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+EMAIL_USE_TLS = False
+
+DATABASES = {
+    'default': {
+        'NAME': '/var/lib/graphite/graphite.db',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',
+        'PORT': ''
+    }
+}

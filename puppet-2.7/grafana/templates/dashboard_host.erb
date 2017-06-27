@@ -1,0 +1,630 @@
+{  
+  "dashboard":{  
+  "annotations":{  
+      "list":[  
+
+         ]
+  },
+  "editable":true,
+  "gnetId":null,
+  "hideControls":false,
+  "id":null,
+  "links":[  
+
+  ],
+  "rows":[  
+         {  
+            "collapse":false,
+            "editable":true,
+            "height":"250px",
+            "panels":[  
+               {  
+                  "aliasColors":{  
+
+                  },
+                  "bars":false,
+                  "datasource":"Old Graphite",
+                  "editable":true,
+                  "error":false,
+                  "fill":1,
+                  "grid":{  
+                     "threshold1":null,
+                     "threshold1Color":"rgba(216, 200, 27, 0.27)",
+                     "threshold2":null,
+                     "threshold2Color":"rgba(234, 112, 112, 0.22)"
+                  },
+		  "id":1,
+                  "isNew":true,
+                  "legend":{  
+                     "avg":false,
+                     "current":false,
+                     "max":false,
+                     "min":false,
+                     "show":true,
+                     "total":false,
+                     "values":false
+                  },
+                  "lines":true,
+                  "linewidth":2,
+                  "links":[  
+
+                  ],
+                  "nullPointMode":"connected",
+                  "percentage":false,
+                  "pointradius":5,
+                  "points":false,
+                  "renderer":"flot",
+                  "seriesOverrides":[  
+
+                  ],
+                  "span":12,
+                  "stack":true,
+                  "steppedLine":true,
+                  "targets":[  
+                     {  
+		     	"hide": false,
+			"refId": "A",
+			"textEditor": false,
+			"target": "alias(averageSeries(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.cpu.cpu*.iowait),'cpu iowait')"
+                     },
+                     {  
+			"refId": "B",
+			"textEditor": false,
+			"target": "alias(averageSeries(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.cpu.cpu*.system),'cpu system')"
+                     },
+                     {  
+			"refId": "C",
+			"textEditor": false,
+			"target": "alias(averageSeries(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.cpu.cpu*.user),'cpu user')"
+                     }
+                  ],
+                  "timeFrom":null,
+                  "timeShift":null,
+		  "title":"<%=@hostname%>.example.<%=@environment%> - cpu",
+                  "tooltip":{  
+                     "msResolution":false,
+                     "shared":true,
+                     "sort":0,
+                     "value_type":"cumulative"
+                  },
+                  "type":"graph",
+                  "xaxis":{  
+                     "show":true
+                  },
+                  "yaxes":[  
+                     {  
+                        "format":"short",
+                        "label":null,
+                        "logBase":1,
+                        "max":100,
+                        "min":null,
+                        "show":true
+                     },
+                     {  
+                        "format":"short",
+                        "label":null,
+                        "logBase":1,
+                        "max":100,
+                        "min":null,
+                        "show":true
+                     }
+                  ]
+               }
+            ],
+	    "title":"Row <%=@hostname%>.example.<%=@environment%> - cpu "
+	 },
+      <% @hwinfo_cpus.each_with_index do |cpu,i| %>
+         {  
+            "collapse":false,
+            "editable":true,
+            "height":"250px",
+            "panels":[  
+               {  
+                  "aliasColors":{},
+                  "bars":false,
+                  "datasource":"Old Graphite",
+                  "editable":true,
+                  "error":false,
+                  "fill":1,
+                  "grid":{  
+                     "threshold1":null,
+                     "threshold1Color":"rgba(216, 200, 27, 0.27)",
+                     "threshold2":null,
+                     "threshold2Color":"rgba(234, 112, 112, 0.22)"
+                  },
+		  "id":<%= '2'.to_i + i  %>,
+                  "isNew":true,
+                  "legend":{  
+                     "avg":false,
+                     "current":false,
+                     "max":false,
+                     "min":false,
+                     "show":true,
+                     "total":false,
+                     "values":false
+                  },
+                  "lines":true,
+                  "linewidth":2,
+                  "links":[],
+                  "nullPointMode":"connected",
+                  "percentage":false,
+                  "pointradius":5,
+                  "points":false,
+                  "renderer":"flot",
+                  "seriesOverrides":[ ],
+                  "span":12,
+                  "stack":true,
+                  "steppedLine":true,
+                  "targets":[  
+                     {  
+		     	"hide": false,
+			"refId": "A",
+			"textEditor": false,
+			"target": "alias(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.cpu.<%=cpu%>.iowait, '<%=cpu%> iowait')"
+                     },
+                     {  
+			"refId": "B",
+			"textEditor": false,
+			"target": "alias(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.cpu.<%=cpu%>.system, '<%=cpu%> system')"
+                     },
+                     {  
+			"refId": "C",
+			"textEditor": false,
+			"target": "alias(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.cpu.<%=cpu%>.user, '<%=cpu%> user')"
+                     }
+                  ],
+                  "timeFrom":null,
+                  "timeShift":null,
+		  "title":"<%=@hostname%>.example.<%=@environment%> - <%=cpu%>",
+                  "tooltip":{  
+                     "msResolution":false,
+                     "shared":true,
+                     "sort":0,
+                     "value_type":"cumulative"
+                  },
+                  "type":"graph",
+                  "xaxis":{  
+                     "show":true
+                  },
+                  "yaxes":[  
+                     {  
+                        "format":"short",
+                        "label":null,
+                        "logBase":1,
+                        "max":100,
+                        "min":null,
+                        "show":true
+                     },
+                     {  
+                        "format":"short",
+                        "label":null,
+                        "logBase":1,
+                        "max":null,
+                        "min":null,
+                        "show":true
+                     }
+                  ]
+               }
+            ],
+	    "title":"Row <%=@hostname%>.example.<%=@environment%> - <%=cpu%>"
+	 },
+ <% end %>
+         {  
+            "collapse":false,
+            "editable":true,
+            "height":"250px",
+            "panels":[  
+               {  
+                  "aliasColors":{  
+
+                  },
+                  "bars":false,
+                  "datasource":"Old Graphite",
+                  "editable":true,
+                  "error":false,
+                  "fill":1,
+                  "grid":{  
+                     "threshold1":null,
+                     "threshold1Color":"rgba(216, 200, 27, 0.27)",
+                     "threshold2":null,
+                     "threshold2Color":"rgba(234, 112, 112, 0.22)"
+                  },
+		  "id":128,
+                  "isNew":true,
+                  "legend":{  
+                     "avg":false,
+                     "current":false,
+                     "max":false,
+                     "min":false,
+                     "show":true,
+                     "total":false,
+                     "values":false
+                  },
+                  "lines":true,
+                  "linewidth":2,
+                  "links":[  
+
+                  ],
+                  "nullPointMode":"connected",
+                  "percentage":false,
+                  "pointradius":5,
+                  "points":false,
+                  "renderer":"flot",
+                  "seriesOverrides":[  
+
+                  ],
+                  "span":12,
+                  "stack":false,
+                  "steppedLine":false,
+                  "targets":[  
+                     {  
+                        "refId":"active",
+			"target":"alias(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.memory.Active, 'active')"
+                     },
+                     {  
+                        "refId":"cached",
+			"target":"alias(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.memory.Cached, 'cached')"
+                     },
+                     {  
+                        "refId":"free",
+			"target":"alias(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.memory.MemFree, 'free')"
+                     }
+                  ],
+                  "timeFrom":null,
+                  "timeShift":null,
+		  "title":"<%=@hostname%>.example.<%=@environment%> - mem",
+                  "tooltip":{  
+                     "msResolution":false,
+                     "shared":true,
+                     "sort":0,
+                     "value_type":"cumulative"
+                  },
+                  "type":"graph",
+                  "xaxis":{  
+                     "show":true
+                  },
+                  "yaxes":[  
+                     {  
+                        "format":"bytes",
+                        "label":null,
+                        "logBase":1,
+                        "max":null,
+                        "min":null,
+                        "show":true
+                     },
+                     {  
+                        "format":"short",
+                        "label":null,
+                        "logBase":1,
+                        "max":null,
+                        "min":null,
+                        "show":true
+                     }
+                  ]
+               }
+            ],
+	    "title":"<%=@hostname%>.example.<%=@environment%> - mem"
+         },
+	 <% @hwinfo_networkifaces.each_with_index do |iface,j| %>
+         {  
+            "collapse":false,
+            "editable":true,
+            "height":"250px",
+            "panels":[  
+               {  
+                  "aliasColors":{  
+
+                  },
+                  "bars":false,
+                  "datasource":"Old Graphite",
+                  "editable":true,
+                  "error":false,
+                  "fill":1,
+                  "grid":{  
+                     "threshold1":null,
+                     "threshold1Color":"rgba(216, 200, 27, 0.27)",
+                     "threshold2":null,
+                     "threshold2Color":"rgba(234, 112, 112, 0.22)"
+                  },
+		  "id":<%= '129'.to_i + j  %>,
+                  "isNew":true,
+                  "legend":{  
+                     "avg":false,
+                     "current":false,
+                     "max":false,
+                     "min":false,
+                     "show":true,
+                     "total":false,
+                     "values":false
+                  },
+                  "lines":true,
+                  "linewidth":2,
+                  "links":[  
+
+                  ],
+                  "nullPointMode":"connected",
+                  "percentage":false,
+                  "pointradius":5,
+                  "points":false,
+                  "renderer":"flot",
+                  "seriesOverrides":[  
+
+                  ],
+                  "span":12,
+                  "stack":false,
+                  "steppedLine":false,
+                  "targets":[  
+                     {  
+			"target":"alias(scale(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.network.<%=iface%>.rx_byte, 8), 'rx')"
+                     },
+                     {  
+			"target":"alias(scale(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.network.<%=iface%>.tx_byte, -8), 'tx')"
+                     }
+                  ],
+                  "timeFrom":null,
+                  "timeShift":null,
+		  "title":"<%=@hostname%>.example.<%=@environment%> - network <%=iface%>",
+                  "tooltip":{  
+                     "msResolution":false,
+                     "shared":true,
+                     "sort":0,
+                     "value_type":"cumulative"
+                  },
+                  "type":"graph",
+                  "xaxis":{  
+                     "show":true
+                  },
+                  "yaxes":[  
+                     {  
+                        "format":"bps",
+                        "label":null,
+                        "logBase":1,
+                        "max":null,
+                        "min":null,
+                        "show":true
+                     },
+                     {  
+                        "format":"short",
+                        "label":null,
+                        "logBase":1,
+                        "max":null,
+                        "min":null,
+                        "show":true
+                     }
+                  ]
+               }
+            ],
+	    "title":"<%=@hostname%>.example.<%=@environment%> - network <%=iface%>"
+         },
+ <%end%>
+         {  
+            "collapse":false,
+            "editable":true,
+            "height":"250px",
+            "panels":[  
+               {  
+                  "aliasColors":{  
+
+                  },
+                  "bars":false,
+                  "datasource":"Old Graphite",
+                  "editable":true,
+                  "error":false,
+                  "fill":1,
+                  "grid":{  
+                     "threshold1":null,
+                     "threshold1Color":"rgba(216, 200, 27, 0.27)",
+                     "threshold2":null,
+                     "threshold2Color":"rgba(234, 112, 112, 0.22)"
+                  },
+                  "id":256,
+                  "isNew":true,
+                  "legend":{  
+                     "avg":false,
+                     "current":false,
+                     "max":false,
+                     "min":false,
+                     "show":true,
+                     "total":false,
+                     "values":false
+                  },
+                  "lines":true,
+                  "linewidth":2,
+                  "links":[  
+
+                  ],
+                  "nullPointMode":"connected",
+                  "percentage":false,
+                  "pointradius":5,
+                  "points":false,
+                  "renderer":"flot",
+                  "seriesOverrides":[  
+
+                  ],
+                  "span":12,
+                  "stack":false,
+                  "steppedLine":false,
+                  "targets":[  
+ 		<% @hwinfo_physicaldisks.each_with_index do |disk,i| %>
+                     {  
+		     "target":"alias(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.iostat.<%=disk%>.reads_per_second, '<%=disk%> read/s')"
+                     },
+                     {  
+		     "target":"alias(scale(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.iostat.<%=disk%>.writes_per_second, -1), '<%=disk%> write/s')"
+		     }<%= ',' if i < (@hwinfo_physicaldisks.size - 1) %>
+		<%end%>
+                  ],
+                  "timeFrom":null,
+                  "timeShift":null,
+		  "title":"<%=@hostname%>.example.<%=@environment%> - IOPS",
+                  "tooltip":{  
+                     "msResolution":false,
+                     "shared":true,
+                     "sort":0,
+                     "value_type":"cumulative"
+                  },
+                  "type":"graph",
+                  "xaxis":{  
+                     "show":true
+                  },
+                  "yaxes":[  
+                     {  
+                        "format":"short",
+                        "label":null,
+                        "logBase":1,
+                        "max":null,
+                        "min":null,
+                        "show":true
+                     },
+                     {  
+                        "format":"short",
+                        "label":null,
+                        "logBase":1,
+                        "max":null,
+                        "min":null,
+                        "show":true
+                     }
+                  ]
+               }
+            ],
+	    "title":"<%=@hostname%>.example.<%=@environment%> - IOPS"
+         },
+	 <% @hwinfo_mountpoints.each_with_index do |mount, k| %>
+         {  
+            "collapse":false,
+            "editable":true,
+            "height":"250px",
+            "panels":[  
+               {  
+                  "aliasColors":{  
+
+                  },
+                  "bars":false,
+                  "datasource":"Old Graphite",
+                  "editable":true,
+                  "error":false,
+                  "fill":1,
+                  "grid":{  
+                     "threshold1":null,
+                     "threshold1Color":"rgba(216, 200, 27, 0.27)",
+                     "threshold2":null,
+                     "threshold2Color":"rgba(234, 112, 112, 0.22)"
+                  },
+		  "id":<%= '257'.to_i + k  %>,
+                  "isNew":true,
+                  "legend":{  
+                     "avg":false,
+                     "current":false,
+                     "max":false,
+                     "min":false,
+                     "show":true,
+                     "total":false,
+                     "values":false
+                  },
+                  "lines":true,
+                  "linewidth":2,
+                  "links":[  
+
+                  ],
+                  "nullPointMode":"connected",
+                  "percentage":false,
+                  "pointradius":5,
+                  "points":false,
+                  "renderer":"flot",
+                  "seriesOverrides":[  
+
+                  ],
+                  "span":12,
+                  "stack":false,
+                  "steppedLine":false,
+                  "targets":[  
+                     {  
+			"target":"alias(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.diskspace.<%=mount%>.byte_used,'used')"
+                     },
+                     {  
+			"target":"alias(stats.gauges.vm.<%=@environment%>.<%=@hostname%>.diskspace.<%=mount%>.byte_free, 'free')"
+                     }
+                  ],
+                  "timeFrom":null,
+                  "timeShift":null,
+		  "title":"<%=@hostname%>.example.<%=@environment%> - disk space <%=mount%>",
+                  "tooltip":{  
+                     "msResolution":false,
+                     "shared":true,
+                     "sort":0,
+                     "value_type":"cumulative"
+                  },
+                  "type":"graph",
+                  "xaxis":{  
+                     "show":true
+                  },
+                  "yaxes":[  
+                     {  
+                        "format":"bytes",
+                        "label":null,
+                        "logBase":1,
+                        "max":null,
+                        "min":null,
+                        "show":true
+                     },
+                     {  
+                        "format":"short",
+                        "label":null,
+                        "logBase":1,
+                        "max":null,
+                        "min":null,
+                        "show":true
+                     }
+                  ]
+               }
+            ],
+	    "title":"<%=@hostname%>.example.<%=@environment%> - disk space <%=mount%>"
+	 }<%= ',' if k < (@hwinfo_mountpoints.size - 1) %>
+ <% end %>
+      ],
+      "schemaVersion":12,
+      "sharedCrosshair":false,
+      "style":"dark",
+      "tags":[  
+
+      ],
+      "templating":{  
+         "list":[  
+
+         ]
+      },
+      "time":{  
+         "from":"now-6h",
+         "to":"now"
+      },
+      "timepicker":{  
+         "refresh_intervals":[  
+            "5s",
+            "10s",
+            "30s",
+            "1m",
+            "5m",
+            "15m",
+            "30m",
+            "1h",
+            "2h",
+            "1d"
+         ],
+         "time_options":[  
+            "5m",
+            "15m",
+            "1h",
+            "6h",
+            "12h",
+            "24h",
+            "2d",
+            "7d",
+            "30d"
+         ]
+      },
+      "timezone":"browser",
+      "title":"<%=@hostname%>.example.<%=@environment%>",
+      "version":0
+   },
+  "overwrite": true
+}
