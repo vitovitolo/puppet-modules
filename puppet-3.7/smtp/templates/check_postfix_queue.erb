@@ -1,0 +1,32 @@
+#!/bin/bash
+
+warn=$1
+crit=$2
+
+if [ -z $warn ] || [ -z $crit ]
+then
+	echo "Usage $0 <warn> <crit>"
+	exit 2
+fi
+
+deferred=`find /var/spool/postfix/deferred/ -type f | wc -l 2> /dev/null`
+if [ $? != 0 ]
+then
+	echo "Can't fetch data"
+	exit 2
+fi
+
+if (( "${deferred}" > "${crit}" ))
+then
+	echo "Current deferred mails: ${deferred}/${crit} critical"
+	exit 2
+fi
+
+if (( "$deferred" > "$warn" ))
+then
+	echo "Current deferred mails: ${deferred}/${warn} warning"
+	exit 1
+fi
+
+echo "OK - ${deferred} deferred mails"
+exit 0

@@ -1,0 +1,5 @@
+touch /var/lib/puppet/artifact.pending.list
+LINE="<%=@artifact %>;<%=@environment%>;<%=@hostname%>"
+if ! grep -c "${LINE}" /var/lib/puppet/artifact.pending.list > /dev/null 2<&1; then 
+	echo "${LINE}" >> /var/lib/puppet/artifact.pending.list
+fi

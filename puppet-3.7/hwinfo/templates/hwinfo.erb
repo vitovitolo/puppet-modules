@@ -1,0 +1,53 @@
+#!/bin/bash
+
+#Simple script to collect hw information and put for puppet processing
+
+DST_PATH="/var/run/hwinfo.d"
+IFACE_FILE="${DST_PATH}/networkifaces.yaml"
+PHY_FILE="${DST_PATH}/physicaldisks.yaml"
+CPU_FILE="${DST_PATH}/cpus.yaml"
+MP_FILE="${DST_PATH}/mountpoints.yaml"
+
+if ! [ -d $DST_PATH ]; then
+	mkdir $DST_PATH
+fi
+rm -fr $DST_PATH/*.yaml 2> /dev/null
+
+#Network ifaces
+IFACES_LIST=`cat /proc/net/dev | sed 1,2d | awk '{print $1}' | tr -d ':' | grep -v "^vif" | grep -v "^lo" | grep -v "^veth" | grep -v "^dummy"`
+if [ -n "$IFACES_LIST" ]; then
+	echo "hwinfo::networkifaces:" >> $IFACE_FILE
+	for i in $IFACES_LIST; do
+		echo "  - '$i'" >> $IFACE_FILE
+	done
+fi
+#Physical disks
+SWAP_DISKS=`cat /proc/swaps | sed 1d | awk '{print $1}' | xargs basename 2> /dev/null`
+PHYDISKS_LIST=`cat /proc/diskstats  | awk '{print $3}' | grep -v "^loop" | grep -v "^fd" | grep -v "^sr" | grep -v "^dm" | grep -Ev "^sd[a-z][0-9]+" `
+if [ -n "$PHYDISKS_LIST" ]; then
+	echo "hwinfo::physicaldisks:" >> $PHY_FILE
+	for i in $PHYDISKS_LIST; do
+		if ! [ "$SWAP_DISKS" == "$i" ]; then
+			echo "  - '$i'" >> $PHY_FILE
+		fi
+	done
+fi
+
+#Number of processors
+CPU_NUMBER=`cat /proc/cpuinfo | grep processor  | wc -l`
+if [ -n "$CPU_NUMBER" ]; then
+	echo "hwinfo::cpus:" >> $CPU_FILE
+	for i in `seq $CPU_NUMBER`; do
+		echo "  - 'cpu`expr $i - 1`'" >> $CPU_FILE
+	done
+fi
+
+#Mount points 
+MP_LIST=`cat /proc/mounts | grep -v "\ /\ " |grep -E "xfs|ext2|ext3|ext4" | awk '{print $2}' | sed 's/\//_/g'`
+echo "hwinfo::mountpoints:" >> $MP_FILE
+echo "  - 'root'" >> $MP_FILE
+if [ -n "$MP_LIST" ]; then
+	for i in $MP_LIST; do
+		echo "  - '$i'" >> $MP_FILE
+	done
+fi

@@ -1,0 +1,24 @@
+
+[<%=@name%>]
+path = <%=@path%>
+max connections = <%=@max_connections%>
+timeout = <%=@timeout%>
+comment = <%=@name%>
+secrets file = <%=@secrets_file_path%>
+uid = <%=@uid%>
+gid = <%=@gid%>
+read only = <%=@read_only%>
+write only = <%=@read_only%>
+list = <%=@list%>
+<% if @munge_symblinks -%>
+munge symblinks = <%=@munge_symblinks%>
+<% end -%>
+<% if @in_chmod -%>
+incoming chmod = <%=@in_chmod%>
+<% end -%>
+<% if @prexfer_exec -%>
+pre-xfer exec = <%=@prexfer_exec%>
+<% end -%>
+<% if @postxfer_exec -%>
+post-xfer exec = <%=@postxfer_exec%>
+<% end -%>

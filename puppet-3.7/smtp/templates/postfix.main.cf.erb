@@ -1,0 +1,54 @@
+#########################################################
+# This file is managed by puppet. Do not edit manually  #
+#########################################################
+# See /usr/share/postfix/main.cf.dist for a commented, more complete version
+queue_directory = /var/spool/postfix
+command_directory = /usr/sbin
+daemon_directory = /usr/lib/postfix
+data_directory = /var/lib/postfix
+#
+myhostname = <%=@myhostname %>
+smtp_helo_name = <%=@smtp_helo_name%>
+myorigin = $mydomain
+smtpd_banner = $myhostname ESMTP $mail_name (Debian/GNU)
+
+biff = no
+append_dot_mydomain = no
+readme_directory = no
+
+smtpd_tls_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem
+smtpd_tls_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
+smtpd_use_tls=yes
+smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
+smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+
+alias_maps = hash:/etc/aliases
+alias_database = hash:/etc/aliases
+virtual_alias_maps = hash:/etc/postfix/virtual_alias, regexp:/etc/postfix/virtual_alias_regexp
+smtp_generic_maps = hash:/etc/postfix/generic
+transport_maps = hash:/etc/postfix/transport
+
+mydestination = <%=@myhostname%>, <%=@hostname%>, <%=@fqdn%>, localhost.localdomain, localhost
+
+<% if @allow_any_destination -%>
+#we allow all mail to go out
+smtpd_recipient_restrictions = check_recipient_access hash:/etc/postfix/recipient_block, reject_unknown_recipient_domain, permit_mynetworks, defer
+<% else -%>
+#we allow mail to only specified domains
+smtpd_recipient_restrictions = check_recipient_access hash:/etc/postfix/recipient_block, reject_unauth_destination, reject_unknown_recipient_domain, permit_mynetworks, defer
+<% end -%>
+maximal_queue_lifetime = <%=@queue_lifetime%>
+bounce_queue_lifetime = <%=@queue_lifetime%>
+minimal_backoff_time = 600s
+queue_run_delay = 600s
+<% if @relay_domains -%>
+relay_domains = <% @relay_domains.each do |relay_domain| %><%=relay_domain%> <% end %>
+<% end -%>
+mynetworks = 127.0.0.0/8 <% @mynetworks.each do |network| %><%=network%> <% end %>
+mailbox_size_limit = 0
+recipient_delimiter = +
+inet_interfaces = <%=@interfaces%>
+inet_protocols = ipv4
+default_transport = smtp
+relay_transport = relay
+

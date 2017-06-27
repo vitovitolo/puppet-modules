@@ -1,0 +1,57 @@
+#!/bin/bash
+MYNAME=`basename ${0}`
+# Error and return conditions
+SUCCESS=0
+FAILURE=255
+SYNTAX_error=255
+# Command options
+CURL_OPT="--silent --insecure --fail --connect-timeout 5 --max-time 60"
+# Nagios exit status
+NAGIOS_OK=0
+NAGIOS_WARNING=1
+NAGIOS_CRITICAL=2
+NAGIOS_UNKNOWN=3
+USAGE()
+{
+	echo "Usage: ${MYNAME} <HOST> "
+	echo "       Check elasticsearch health with HOST endpoint"
+	echo "       HOST        : Hostname of elasticsearch haproxy to query for."
+	exit ${SYNTAX_error}
+}
+if [ $# -ne 1 ]; then
+	USAGE
+else
+	HOST=${1}
+	URL="http://${HOST}:9200/_cat/health"
+fi
+RESPONSE="`curl ${CURL_OPT} ${URL} 2> /dev/null`"
+RESPONSE_STATUS=$?
+if [ ${RESPONSE_STATUS} -eq ${SUCCESS} ]; then
+	CLUSTER_NAME="`echo "${RESPONSE}" | awk '{print $3}' 2>&1`"
+	STATUS="`echo "${RESPONSE}" | awk '{print $4}' 2>&1`"
+	PERCENT="`echo "${RESPONSE}" | awk '{print $14}' 2>&1`"
+	if [ -n ${STATUS} ]; then
+		if [ "${STATUS}" == "green" ]; then
+			nagios_statusmsg="Elasticsearch ${CLUSTER_NAME} cluster are ${PERCENT} healthy!"
+			nagios_status=${NAGIOS_OK}
+		elif [ "${STATUS}" == "yellow" ]; then
+			nagios_statusmsg="Elasticsearch ${CLUSTER_NAME} cluster are degraded! Only ${PERCENT} of shards are active"
+			nagios_status=${NAGIOS_WARNING}
+		elif [ "${STATUS}" == "red" ]; then
+			nagios_statusmsg="Bad news.. Elasticsearch ${CLUSTER_NAME} cluster have data loss. At least one primary shard (and all of its replicas) is missing"
+			nagios_status=${NAGIOS_CRITICAL}
+		else
+			nagios_statusmsg="Unknow response from elasticsearch cluster."
+			nagios_status=${NAGIOS_UNKNOWN}
+		fi
+	else
+		nagios_statusmsg="Unknow response from elasticsearch cluster behind ${URL}"
+		nagios_status=${NAGIOS_UNKNOWN}
+	fi
+else
+	nagios_statusmsg="Elasticsearch cluster behind ${URL} returned HTTP error code"
+	nagios_status=${NAGIOS_CRITICAL}
+fi
+echo "${nagios_statusmsg}"
+exit ${nagios_status}
+

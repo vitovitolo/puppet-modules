@@ -1,0 +1,307 @@
+#!/bin/bash
+# Deploy script
+BASENAME=`basename $0`
+WGET_OPT="--quiet --continue --dns-timeout=1 --connect-timeout=2 --read-timeout=10 --timeout=21600 --tries=2"
+SERVICE_WAIT="30"
+BCK_DIR="<%=@deploy_path%>/backup"
+LOCALDIR="<%=@deploy_path%>/local"
+DATE=`date +%Y%m%d_%H%M%S` 
+PING_CONTROLLER_PATH="/var/lib/company"
+ARTIFACT_DEPLOYED_PATH="<%=@deploy_path%>/deployed"
+LOCK_PATH="<%=@deploy_path%>/tmp/"
+MAX_LOCAL_BACKUP="<%=@backup_count%>"
+DEPLOY_TMP_FILE=".deploy"
+
+# Error and return conditions
+SUCCESS=0
+FAILURE=1
+SYNTAX_error=255
+NOT_FOUND_error=254
+
+#######################
+#### FUNCTIONS ########
+#######################
+
+function USAGE() {
+	echo "Usage: ${BASENAME} <deploy file>"
+	echo "<deploy file>: file with artifact name and url" 
+}
+
+function LOG(){
+	logger -t ${BASENAME} -p daemon.notice
+}
+
+function WGET_ARTIFACT() {
+	if [ $# -ne 2 ]; then
+		echo "Invalid arguments" 
+		echo "Usage: WGET_ARTIFACT <URL> <ARTIFACT_NAME>" 
+		return ${FAILURE}
+	fi
+	URL=${1}
+	ARTIFACT=${2}
+	#TODO check if artifact exists in bkp path
+	cd /tmp/
+	if [ -f "${ARTIFACT}" ]; then
+		rm ${ARTIFACT} 2> /dev/null 
+	fi
+	echo "Downloading ${ARTIFACT} ..." 
+	wget ${WGET_OPT} ${URL} --output-document ${ARTIFACT}
+	RC=$?
+	if [ ${RC} -ne ${SUCCESS} ]; then
+		echo "Download ${URL} failed." 
+		return ${RC}
+	fi
+	if ! [ -f "${ARTIFACT}" ]; then 
+		echo "Downloaded ${ARTIFACT} is not a file." 
+		return ${FAILURE}
+	else
+		mv ${ARTIFACT} ${LOCALDIR}/
+		cd - > /dev/null
+		echo "Downloaded ${ARTIFACT} sucessfully"
+		return ${SUCCESS}
+	fi
+}
+
+function BACKUP_ARTIFACT() {
+	if [ $# -lt 1 ]; then
+		echo "Invalid arguments"
+		echo "Usage: BACKUP_ARTIFACT <ARTIFACT_NAME> <ARTIFACT_VERSION>"
+		return ${FAILURE}
+	fi
+	ARTIFACT_NAME=${1}
+	ARTIFACT_VERSION=${2}
+	ARTIFACT_BCK=${ARTIFACT_NAME}_${DATE}
+	if [ -f "${LOCALDIR}/${ARTIFACT_NAME}" ] ; then
+		cd ${LOCALDIR}/
+		if [ -z ${ARTIFACT_VERSION} ]; then
+			md5sum ${ARTIFACT_NAME} > ${BCK_DIR}/${ARTIFACT_BCK}.version
+		else
+			echo ${ARTIFACT_VERSION} > ${BCK_DIR}/${ARTIFACT_BCK}.version
+		fi
+		cd - > /dev/null
+		cp ${LOCALDIR}/${ARTIFACT_NAME} ${BCK_DIR}/${ARTIFACT_BCK}
+		if [ $? -eq 0 ]; then
+			echo "Backup created successfully: ${ARTIFACT_BCK}"
+			echo "Deleting old backups.."
+			TAIL_PARAM=`expr ${MAX_LOCAL_BACKUP} \* 2 + 1`
+			#Delete all backups, except 2 newer (2 artifacts + 2 md5) 
+			rm `ls -t ${BCK_DIR}/${ARTIFACT_NAME}* | tail -n +${TAIL_PARAM}` 2> /dev/null
+		fi
+		return ${SUCCESS}
+	else
+		echo "Could not create backup because directory ${LOCALDIR}/${ARTIFACT_NAME} does not exist."
+		return ${FAILURE}
+	fi
+}
+
+function CHECK_BCK_ARTIFACTS(){
+	if [ $# -ne 1 ]; then
+		echo "Invalid arguments"
+		echo "Usage: CHECK_BCK_ARTIFACTS <ARTIFACT_VERSIONFILE>"
+		return ${FAILURE}
+	fi
+	ARTIFACT_VERSIONFILE=${1}
+	#find in backup path if version file exists
+	for FILE in `ls ${BCK_DIR}/*.version 2> /dev/null`; do
+		diff ${ARTIFACT_VERSIONFILE} ${FILE} > /dev/null 
+		if [ $? -eq 0 ]; then
+			echo "Artifact found in backup path. Rolling back artifact: ${FILE:0:-8} ..."
+			cp ${FILE:0:-8} ${LOCALDIR}/${ARTIFACT_NAME}
+			return ${SUCCESS}
+		fi
+	done
+	return ${NOT_FOUND_error}
+}
+
+#########################
+### MAIN LOGIC ##########
+#########################
+
+if [ $# -ne 1 ]; then
+	USAGE;
+	exit ${SYNTAX_error}
+else
+	DEPLOY_FILE=${1}
+fi
+
+if ! [ -f "${DEPLOY_FILE}" ] ; then
+	echo "Could not find deploy file"
+	exit ${FAILURE}
+fi
+
+#CHECK if deploy_file have artifact with version naming to download it
+if grep versions "${DEPLOY_FILE}" > /dev/null ; then
+	VERSIONS_FILE=`cat ${DEPLOY_FILE} | grep -v '^$' | sed 's/\r//'`
+	DEPLOY_TMP_FILE+="_`echo ${DEPLOY_FILE} | grep -o '[^/]*$'`"
+	WGET_ARTIFACT ${VERSIONS_FILE} ${DEPLOY_TMP_FILE}
+	DEPLOY_FILE="${LOCALDIR}/${DEPLOY_TMP_FILE}"
+fi
+
+#PARSE ARGUMENTS
+ARTIFACT_URL=`sed -n '1p' ${DEPLOY_FILE}`
+if ! echo "${ARTIFACT_URL}" | grep '^http[s]*://' > /dev/null; then
+	#URL is RELATIVE. Add protocol and host
+	ARTIFACT_URL="<%=@protocol%>://<%=@server%>/${ARTIFACT_URL}"
+fi
+ARTIFACT_NAME=`echo ${ARTIFACT_URL} | grep -o '[^/]*$'`
+ARTIFACT_URL_TRUNK=`echo ${ARTIFACT_URL} | grep -o '^http.*/'`
+ARTIFACT_EXT="`echo ${ARTIFACT_NAME} | awk -F'.' '{print $(NF)}'`"
+COUNT_EXT=`echo ${ARTIFACT_EXT} | wc -m`
+# Check version if exists
+ARTIFACT_VERSION="`echo ${ARTIFACT_NAME} | grep -Eo '_[0-9]+\.[0-9]+\.[0-9]+(-SNAPSHOT-|-RC-)?[0-9]{8}?-?[0-9]{4}?'`"
+if ! [ -z ${ARTIFACT_VERSION} ]; then
+        ARTIFACT_NAME="`echo $ARTIFACT_NAME | sed s/$ARTIFACT_VERSION//g`"
+fi
+
+if [ ${COUNT_EXT} -eq 3 ]; then
+	if [ "${ARTIFACT_EXT}" == "gz" ]; then
+		ARTIFACT_EXT2="`echo ${ARTIFACT_NAME} | awk -F'.' '{print $(NF-1)}'`"
+		if [ "${ARTIFACT_EXT2}" == "tar" ]; then
+			APPNAME=${ARTIFACT_NAME:0:-7}
+			ARTIFACT_EXT="tar.gz"
+		else
+			echo "Artifact extension not supported: ${ARTIFACT_NAME}"
+			return ${FAILURE}
+		fi
+	else
+		APPNAME=${ARTIFACT_NAME:0:-3}
+	fi
+elif [ ${COUNT_EXT} -eq 4 ]; then
+	APPNAME=${ARTIFACT_NAME:0:-4}
+elif [ -z ${COUNT_EXT} ]; then
+	echo "Artifact extension not supported: ${ARTIFACT_NAME}"
+	return ${FAILURE}
+fi
+
+if [ -z ${ARTIFACT_URL} ] || [ -z ${ARTIFACT_NAME} ] || [ -z ${ARTIFACT_URL_TRUNK} ] || [ -z ${APPNAME} ]; then
+	echo "Could not parse deploy file correctly or wrong format."
+	exit ${FAILURE}
+fi
+
+#Create lock file for concurrence deployments
+if [ -f "${LOCK_PATH}/.${ARTIFACT_NAME}.lock" ]; then
+	echo "Deploy already in progress: ${LOCK_PATH}/.${ARTIFACT_NAME}.lock"
+	exit ${FAILURE}
+else
+	touch ${LOCK_PATH}/.${ARTIFACT_NAME}.lock
+fi
+
+#DOWNLOAD MD5 or VERSION FILE
+if [ -z ${ARTIFACT_VERSION} ]; then
+	WGET_ARTIFACT ${ARTIFACT_URL}.md5 ${ARTIFACT_NAME}.version
+	RC=$?
+	if [ ${RC} -ne ${SUCCESS} ]; then
+		rm ${LOCK_PATH}/.${ARTIFACT_NAME}.lock
+		exit ${RC}
+	fi
+else
+	echo ${ARTIFACT_VERSION} > ${LOCALDIR}/${ARTIFACT_NAME}.version
+fi
+echo "Artifact to deploy: " `cat ${LOCALDIR}/${ARTIFACT_NAME}.version`
+
+#CHECK if artifact is already deployed 
+if [ -f ${ARTIFACT_DEPLOYED_PATH}/${APPNAME}.deployed ]; then
+	diff ${ARTIFACT_DEPLOYED_PATH}/${APPNAME}.deployed ${LOCALDIR}/${ARTIFACT_NAME}.version > /dev/null
+	RC=$?
+	if [ ${RC} -eq ${SUCCESS} ]; then
+		echo "Artifact already deployed. Nothing to do."
+		rm ${LOCK_PATH}/.${ARTIFACT_NAME}.lock
+		exit ${SUCESS}
+	fi
+fi
+
+#CHECK if artifact exists in backup path 
+CHECK_BCK_ARTIFACTS ${LOCALDIR}/${ARTIFACT_NAME}.version
+BCK_RC=$?
+#IF ARTIFACT NOT FOUND IN BACKUP, DOWNLOAD IT
+if [ ${BCK_RC} -eq ${NOT_FOUND_error} ]; then
+	WGET_ARTIFACT ${ARTIFACT_URL}  ${ARTIFACT_NAME}
+	RC=$?
+	if [ ${RC} -ne ${SUCCESS} ]; then
+		rm ${LOCK_PATH}/.${ARTIFACT_NAME}.lock
+		exit ${RC}
+	fi
+	#Checksum md5 of downloaded artifact if exists
+	if [ -z ${ARTIFACT_VERSION} ]; then
+		cd ${LOCALDIR}
+		md5sum -c ${LOCALDIR}/${ARTIFACT_NAME}.version > /dev/null
+		if [ $? -ne "${SUCCESS}" ]; then
+			echo "Md5 checksum failed."
+			rm ${LOCK_PATH}/.${ARTIFACT_NAME}.lock
+			exit ${FAILURE}
+		fi
+	fi
+fi
+
+#DOWNLOAD ARTIFACT DEPLOY LIBRARY
+WGET_ARTIFACT ${ARTIFACT_URL_TRUNK}/config.deploy ${ARTIFACT_NAME}.deploy
+RC=$?
+if [ ${RC} -ne ${SUCCESS} ]; then
+	rm ${LOCK_PATH}/.${ARTIFACT_NAME}.lock
+	exit ${RC}
+fi
+
+#DISABLE PING CONTROLLER
+if ! [ -d "${PING_CONTROLLER_PATH}" ]; then
+	mkdir -p ${PING_CONTROLLER_PATH}
+fi
+echo "Disabling service ${APPNAME} ..."
+touch ${PING_CONTROLLER_PATH}/${APPNAME}
+RC=$?
+if [ ${RC} -ne ${SUCCESS} ]; then
+	echo "Could not create ping controller file: ${PING_CONTROLLER_PATH}/${APPNAME}"
+	rm ${LOCK_PATH}/.${ARTIFACT_NAME}.lock
+	exit ${RC}
+fi
+sleep ${SERVICE_WAIT}	
+
+#SOURCE DEPLOY LIBRARY
+if ! [ -f "${LOCALDIR}/${ARTIFACT_NAME}.deploy" ]; then
+	echo "Deploy library not found: ${LOCALDIR}/${ARTIFACT_NAME}.deploy"
+	rm ${LOCK_PATH}/.${ARTIFACT_NAME}.lock
+	exit ${FAILURE}
+else
+	source ${LOCALDIR}/${ARTIFACT_NAME}.deploy
+fi
+
+#BACKUP ARTIFACT ONLY IF BCK_RC VAR IS NOT_FOUND
+if [ ${BCK_RC} -eq ${NOT_FOUND_error} ]; then
+	BACKUP_ARTIFACT ${ARTIFACT_NAME} ${ARTIFACT_VERSION}
+fi
+
+#DEPLOY
+DEPLOY ${APPNAME} ${ARTIFACT_EXT} ${LOCALDIR}
+RC=$?
+if [ ${RC} -eq ${SUCCESS} ]; then
+	#ENABLING PING CONTROLLER
+	#TODO: check service before enable it
+	rm ${PING_CONTROLLER_PATH}/${APPNAME}
+	RC=$?
+	if [ ${RC} -eq ${SUCCESS} ]; then
+		echo "Enabling service ${APPNAME} successfully"
+		#Delete lock file
+		if [ -f "${LOCK_PATH}/.${ARTIFACT_NAME}.lock" ]; then
+			rm ${LOCK_PATH}/.${ARTIFACT_NAME}.lock
+		else
+			echo "Deploy lock file could not be delete."
+			exit ${FAILURE}
+		fi
+		cp ${LOCALDIR}/${ARTIFACT_NAME}.version ${ARTIFACT_DEPLOYED_PATH}/${APPNAME}.deployed
+		echo "Updated deployed artifact version"
+		rm ${LOCALDIR}/${ARTIFACT_NAME} 2> /dev/null
+		rm ${LOCALDIR}/${ARTIFACT_NAME}.version 2> /dev/null
+		rm ${LOCALDIR}/${ARTIFACT_NAME}.deploy 2> /dev/null
+		exit ${SUCCESS}
+	else
+		echo "Error enabling service ${APPNAME}"
+		rm ${LOCK_PATH}/.${ARTIFACT_NAME}.lock
+		exit ${RC}
+	fi
+else
+	echo "Error deploying ${ARTIFACT_NAME}"
+	rm ${LOCK_PATH}/.${ARTIFACT_NAME}.lock
+	exit ${RC}
+	#TODO in deploy_type.sh
+	#DEPLOY_ROLLBACK
+fi
+

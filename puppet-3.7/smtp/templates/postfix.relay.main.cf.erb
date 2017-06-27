@@ -1,0 +1,13 @@
+relayhost = <%=@relayhost%>
+<% if @relayhost != "" -%>
+<% if @relay_auth and @relay_auth != "" -%>
+#support for authenticated SMTP
+smtp_sasl_auth_enable = yes
+smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+smtp_sasl_security_options = 
+<% end -%>
+<% if @relay_tls and @relay_tls != "" -%>
+smtp_use_tls=yes
+smtp_tls_CAfile=/etc/ssl/certs/ca-certificates.crt
+<% end -%>
+<% end -%>

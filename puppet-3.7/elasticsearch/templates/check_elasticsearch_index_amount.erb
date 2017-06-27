@@ -1,0 +1,55 @@
+#R!/bin/bash
+#Check elasticsearch index amount
+BASENAME=`basename ${0}`
+# Error and return conditions
+SUCCESS=0
+SYNTAX_error=255
+# Nagios exit status
+NAGIOS_OK=0
+NAGIOS_WARNING=1
+NAGIOS_CRITICAL=2
+NAGIOS_UNKNOWN=3
+
+CURL_OPTS="--silent --insecure --connect-timeout 5 --max-time 60"
+
+USAGE()
+{
+	echo "Usage: ${MYNAME} <index name> <threshold>"
+	echo "       Check Elasticsearch Index Amount"
+	echo "       <index name> Index name or pattern to search for"
+	echo "       <threshold> Threshold of index amount to alert"
+	exit ${SYNTAX_error}
+}
+
+if [ $# -ne 2 ]; then
+	USAGE
+else
+	INDEX_NAME=${1}
+	THRESHOLD=${2}
+fi
+
+RESPONSE="`curl ${CURL_OPTS} "http://localhost:9200/_cat/indices" | awk '{print $3}' | grep "${INDEX_NAME}" | wc -l`"
+RESPONSE_STATUS=$?
+if [ "${RESPONSE_STATUS}" -eq "${SUCCESS}" ]; then
+	if [ -z "${RESPONSE}" ]; then
+		NAGIOS_STATUSMSG="Elasticsearch HTTP response empty"
+		NAGIOS_STATUS=${NAGIOS_UNKNOWN}
+	else
+		if [ "${RESPONSE}" -gt "${THRESHOLD}" ]; then
+			NAGIOS_STATUSMSG="There are too many indexes (${RESPONSE}) that matchs ${INDEX_NAME} in Elasticsearch cluster. Please purge old data."
+			NAGIOS_STATUS=${NAGIOS_CRITICAL}
+		elif [ "${RESPONSE}" -le "${THRESHOLD}" ]; then
+			NAGIOS_STATUSMSG="${INDEX_NAME} index amount are below threshold ${THRESHOLD} in Elasticsearch cluster"
+			NAGIOS_STATUS=${NAGIOS_OK}
+		else
+			NAGIOS_STATUSMSG="Could not understand Elasticsearch HTTP response"
+			NAGIOS_STATUS=${NAGIOS_UNKNOWN}
+		fi
+	fi
+else
+	NAGIOS_STATUSMSG="${RESPONSE_STATUS} Error executing check: ${RESPONSE}"
+	NAGIOS_STATUS=${NAGIOS_UNKNOWN}
+fi
+echo "${NAGIOS_STATUSMSG}"
+exit ${NAGIOS_STATUS}
+

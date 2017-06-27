@@ -1,0 +1,33 @@
+#!/bin/bash
+# Grafana dashboard creator: This script push a template in json format via Grafana API overwriting if exists 
+
+GRAFANA_HOSTNAME="<%=@grafana_hostname%>"
+GRAFANA_API_KEY="<%=@grafana_api_key%>"
+
+function USAGE(){
+	echo "Usage: $BASENAME <Template> "
+	echo "<Template>: Grafana dashboard template in json format"
+	exit 1
+}
+
+if [ $# -ne 1 ]; then
+	USAGE
+else
+
+	TEMPLATE="$1"
+fi
+
+CURL_OPTS=" --connect-timeout 3 --max-time 3  -q -s -o /dev/null  "
+
+CREATE_RC="`curl $CURL_OPTS  -w "%{http_code}" --header "Accept: application/json" --header "Content-Type: application/json" --header "Authorization: Bearer ${GRAFANA_API_KEY}" -XPOST -d "@${TEMPLATE}" http://${GRAFANA_HOSTNAME}/api/dashboards/db`"
+
+if [ "${CREATE_RC}" == "412" ]; then
+	echo "Error. Dashboard exists!"
+	exit 1
+elif [ "${CREATE_RC}" == "200" ]; then
+	echo "Dashboard created ok"
+	exit 0
+else
+	echo "Error. Grafana API raises error: ${CREATE_RC}"
+	exit 1
+fi

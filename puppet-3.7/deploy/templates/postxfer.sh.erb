@@ -1,0 +1,18 @@
+#!/bin/bash
+LOCKFILE="<%=@var_run_path%>/.deploy.lock"
+LOG="logger -p local0.info -t postxfer_deploy"
+TO_DEPLOY_ARTIFACTS=`find ${RSYNC_MODULE_PATH} -type f`
+touch ${LOCKFILE}
+for ARTIFACT in ${TO_DEPLOY_ARTIFACTS}; do 
+	<%=@deploy_path%>/bin/deploy.sh ${ARTIFACT} | ${LOG}
+	if [ $? -ne 0 ]; then
+		echo "Postxfer-deploy ${ARTIFACT} failed. Exiting..." | ${LOG}
+		rm ${LOCKFILE}
+		exit 1
+	fi
+done
+
+echo "Postxfer-deploy ${ARTIFACT} succesfully" | ${LOG}
+rm ${RSYNC_MODULE_PATH}/*
+rm ${LOCKFILE}
+exit 0 

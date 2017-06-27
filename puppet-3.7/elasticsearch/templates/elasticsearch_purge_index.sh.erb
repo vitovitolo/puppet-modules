@@ -1,0 +1,37 @@
+#!/bin/bash
+
+BASENAME=`basename ${0}`
+CURL_OPT="--silent --insecure --fail --connect-timeout 5 --max-time 60"
+
+function USAGE(){
+	echo "Usage: ${BASENAME} <elastic hostname> <index name> <days to keep> "
+	exit 1
+}
+
+if [ $# -ne 3 ]; then
+	USAGE
+else
+	E_HOST="${1}"
+	INDEX_NAME="${2}"
+	DAYS_TO_KEEP="${3}"
+fi
+
+DATE_MAX=` date +%Y%m%d -d "-${DAYS_TO_KEEP} days"`
+
+CURRENT_INDEXES=`curl ${CURL_OPT} "http://${E_HOST}:9200/_cat/indices/${INDEX_NAME}-*" | awk '{print $3}' | sed s/${INDEX_NAME}-//g `
+
+if [ -n "${CURRENT_INDEXES}" ]; then
+	for INDEX_DATE in ${CURRENT_INDEXES} ; do
+		INDEX_DATE_FILTERED=`echo $INDEX_DATE | tr -d '.-' | tr -d '/' `
+		if [ "${INDEX_DATE_FILTERED}" -lt "${DATE_MAX}" ] ; then 
+			curl ${CURL_OPT} -X DELETE "http://${E_HOST}:9200/${INDEX_NAME}-${INDEX_DATE}"  > /dev/null 
+			if [ $? -ne 0 ]; then
+				echo "Error deleting index: ${INDEX_NAME}-${INDEX_DATE}"
+			else
+				echo "Deleted succesfully index: ${INDEX_NAME}-${INDEX_DATE}"
+			fi
+		fi
+	done
+else
+	echo "Error. There aren't indexes which matches '${INDEX_NAME}-*' "
+fi

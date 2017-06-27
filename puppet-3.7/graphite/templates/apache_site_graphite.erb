@@ -1,0 +1,20 @@
+<VirtualHost *:80>
+	ServerName graphite
+	ServerAlias graphite.<%=@domain%>
+	WSGIDaemonProcess _graphite processes=5 threads=5 display-name='%{GROUP}' inactivity-timeout=120 user=_graphite group=_graphite
+	WSGIProcessGroup _graphite
+	WSGIImportScript <%=@root_dir%>/graphite.wsgi process-group=_graphite application-group=%{GLOBAL}
+	WSGIScriptAlias / <%=@root_dir%>/graphite.wsgi
+
+	Header set Access-Control-Allow-Origin "*"
+
+	Alias /content/ <%=@root_dir%>/static/
+
+	<Location "/content/">
+		SetHandler None
+	</Location>
+
+	ErrorLog ${APACHE_LOG_DIR}/graphite-web_error.log
+	LogLevel warn
+	CustomLog ${APACHE_LOG_DIR}/graphite-web_access.log combined
+</VirtualHost>

@@ -1,0 +1,13 @@
+#deploy bash-completion
+function args() { shift; echo $*; }
+_deploy_()
+{
+	cur=`_get_cword`
+	arg=`args ${COMP_WORDS[@]}`
+	actions=`find <%=@deploy_path%>/versions/ -type f 2>/dev/null`
+	COMPREPLY=( $( compgen -W "$actions" -- $cur ) )
+}
+
+complete -o default -o nospace -F _deploy_ deploy
+
+

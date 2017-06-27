@@ -1,0 +1,11 @@
+#!/bin/bash
+# Deploy script
+BASENAME=`basename $0`
+ARTIFACT_DEPLOYED_PATH="<%=@deploy_path%>/deployed"
+if [ -d ${ARTIFACT_DEPLOYED_PATH} ]; then
+	cd ${ARTIFACT_DEPLOYED_PATH}
+	for package in `ls -1 | sed 's/\.deployed$//'`; do
+		md5=`cat ${package}.deployed | cut -d' ' -f1`;
+		echo "${package}=${md5}"
+	done
+fi
