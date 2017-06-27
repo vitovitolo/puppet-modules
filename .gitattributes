@@ -1,0 +1,10 @@
+* text=auto
+
+*.pp text
+*.yaml text
+*.conf text
+*.erb linguist-documentation
+*.md text
+*.txt text
+*.sh text
+
