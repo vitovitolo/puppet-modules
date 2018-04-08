@@ -1,0 +1,31 @@
+#########################################################
+# This file is managed by puppet. Do not edit manually  #
+#########################################################
+zone "<%=@name%>" {
+	type <%=@type%>;
+<% if @forwarders.length > 0 -%>
+	forwarders {
+		<% @forwarders.each do |forwarder| -%>
+		<%=forwarder%>;
+		<% end -%>
+	};
+<% end -%>
+<% if @type == "forward" -%>
+	forward only;
+<% else -%>
+	file "<%=@db_file%>";
+<% end -%>
+<% if @masters.length > 0 -%>
+	masters { <% @masters.each do |master| %><% if master != "" %><%=master%>; <%end%><%end%>};
+<% end -%>
+<% if @slaves.length > 0 -%>
+	notify yes;
+	also-notify { <% @slaves.each do |slave| %><% if slave != "" %><%=slave%>; <%end%><%end%>};
+<% end -%>
+<% if @allow_transfer.length > 0 -%>
+	allow-transfer { <% @allow_transfer.each do |allowed| %><% if allowed != "" %><%=allowed%>; <%end%><%end%>};
+<% end -%>
+<% if @dynamic_key != "" -%>
+	allow-update { key <%=@dynamic_key%>; };
+<% end -%>
+};

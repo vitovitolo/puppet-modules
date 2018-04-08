@@ -1,0 +1,14 @@
+; file managed by Puppet. DO NOT EDIT MANUALLY
+; BIND data file for <%=@name %>
+<% if @ttl != "" -%>
+$TTL <%=@ttl %>
+<% end -%>
+@ IN SOA <%=@name %>. root.<%=@name %>. (
+	zone_serial ; Serial
+	<%=@refresh %> ; Refresh
+	<%=@retry %> ; Retry
+	<%=@expire %> ; Expire
+	<%=@neg_cache %> ) ; nx (negative cache ttl)
+
+;zone master DNS
+@	IN	NS	<%=@ns%>

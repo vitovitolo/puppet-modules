@@ -1,0 +1,20 @@
+#########################################################
+# This file is managed by puppet. Do not edit manually  #
+#########################################################
+options {
+	directory "/var/cache/bind";
+	allow-query {
+		any;
+	};
+	forwarders {
+<%@forwarders.each do |forwarder| -%>
+		<%=forwarder %>;
+<% end -%>
+	};
+	auth-nxdomain no;
+	allow-transfer { none; };
+	listen-on { <%=@ip%>; };
+	listen-on-v6 { none; };
+};
+
+

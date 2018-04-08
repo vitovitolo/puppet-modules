@@ -1,0 +1,6 @@
+;zone master DNS
+@	IN	NS	<%=@zone_ns%>
+
+<%=@zone_entries %>
+
+<%=scope.function_get_command_result(["vmb dns " + @zone_environment]) %>

@@ -1,0 +1,4 @@
+;zone master DNS
+@	IN	NS	<%=@zone_reverse_dns %>
+
+<%=scope.function_get_command_result(["vmb reversedns " + @zone_reverse_range + "."]) %>

@@ -1,0 +1,16 @@
+options {
+	directory "/var/cache/bind";
+	allow-query {
+		any;
+	};
+	forwarders {
+	<%@dns_forwarders.each do |dnsForwarder| %>
+		<%=dnsForwarder %>;<% end %>
+	};
+	auth-nxdomain no;
+	allow-transfer { none; };
+	listen-on { <%=@listen_on%>; };
+	listen-on-v6 { none; };
+};
+
+

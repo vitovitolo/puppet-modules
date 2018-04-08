@@ -1,0 +1,43 @@
+zone "<%=@zone_name %>" {
+	type <%=@zone_type%>;
+	<% if @zone_type == "forward" -%>
+	forwarders {
+		<% @zone_forwarders.each do |forwarder| -%>
+		<%=forwarder%>;
+		<% end -%>
+	};
+	forward only;
+	<% else -%>
+	file "<%=@zone_db_file%>";
+	<% end -%>
+	<% if @zone_type == "slave" -%>
+	masters { <%=@zone_master %>; };
+	<% end -%>
+	<% if @zone_type == "master" -%>
+	notify yes;
+	also-notify {
+	<% @zone_slaves.each do |slave| -%>
+	<% if slave != "" -%>
+		<%=slave%>;
+	<% end -%>
+	<% end -%>
+	};
+	allow-transfer {
+	<% @zone_allowtransfer.each do |allowed| -%>
+	<% if allowed != "" -%>
+		<%=allowed%>;
+	<% end -%>
+	<% end -%>
+	<% @zone_slaves.each do |slave| -%>
+	<% if slave != "" -%>
+		<%=slave%>;
+	<% end -%>
+	<% end -%>
+	};
+<% end -%>
+<% if @zone_dynamic -%>
+	allow-update {
+		key rndc-key;
+	};
+<% end -%>
+};

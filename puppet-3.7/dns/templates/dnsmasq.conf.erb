@@ -1,0 +1,11 @@
+#########################################################
+# This file is managed by puppet. Do not edit manually  #
+#########################################################
+# Configuration file for dnsmasq.
+#
+port=53
+<% if @local_domain != "" -%>
+local=/<%=@local_domain%>/
+<% end -%>
+listen-address=<%=@ip%>
+bind-interfaces
